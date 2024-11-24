@@ -1,9 +1,9 @@
 from lapTime_module import Lap
-from typing import List
+from typing import Callable
 
 class MergeSort:
     @staticmethod
-    def merge(arr: List[Lap], l, m, r):
+    def merge(arr, l, m, r, key: Callable):
         n1 = m - l + 1
         n2 = r - m
 
@@ -20,7 +20,7 @@ class MergeSort:
         k = l
 
         while i < n1 and j < n2:
-            if L[i].time <= R[j].time:
+            if key(L[i]) <= key(R[j]):
                 arr[k] = L[i]
                 i += 1
             else:
@@ -39,9 +39,9 @@ class MergeSort:
             k += 1
 
     @staticmethod
-    def sort(arr, l, r):
+    def sort(arr, l, r, key: Callable):
         if l < r:
             m = l + (r - l) // 2
-            MergeSort.sort(arr, l, m)
-            MergeSort.sort(arr, m + 1, r)
-            MergeSort.merge(arr, l, m, r)
+            MergeSort.sort(arr, l, m, key)
+            MergeSort.sort(arr, m + 1, r, key)
+            MergeSort.merge(arr, l, m, r, key)

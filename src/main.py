@@ -1,9 +1,13 @@
 from data_get import Instance
 import tkinter as tk
+import flet as ft
 
 instance = Instance()
 
-def on_button_clickS(session, frame):
+def main(page: ft.Page):
+    select_session(page)
+
+def on_button_clickS(session, page):
     instance.get_drivers(session)
     for widget in frame.winfo_children():
         widget.destroy()
@@ -11,16 +15,16 @@ def on_button_clickS(session, frame):
     global selectedSession
     selectedSession = session
 
-def on_button_clickD(driver, frame):
+def on_button_clickD(driver, page):
     instance.get_laps(driver, selectedSession)
     for widget in frame.winfo_children():
         widget.destroy()
     show_laps(frame)
 
-def select_session(frame):
+def select_session(page):
     for session in instance.sessions:
-        button = tk.Button(frame, text=str(session), command=lambda e=session: on_button_clickS(e, frame))
-        button.pack(fill='x', padx=5, pady=5)
+        btn = ft.ElevatedButton(str(session), on_click=on_button_clickS(session, page))
+        page.add(btn)
 
 def select_driver(frame):
     for driver in instance.drivers:
@@ -61,3 +65,5 @@ instance.get_sessions()
 select_session(frame1)
 
 root.mainloop()
+
+ft.app(main)
