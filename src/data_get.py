@@ -35,8 +35,8 @@ class Instance:
             self.meetings.append(Meeting(i['meeting_name'], i['year'], i['meeting_key']))
 
 
-    def get_sessions(self):
-        url = "https://api.openf1.org/v1/sessions"
+    def get_sessions(self, id):
+        url = "https://api.openf1.org/v1/sessions?meeting_key=" + str(id)
         data = self.get(url)
         self.sessions.clear()
         for i in data:
@@ -63,7 +63,7 @@ class Instance:
         data = self.get(url)
         self.drivers.clear()
         for i in data:
-            driver = Driver(i['full_name'], i['driver_number'])
+            driver = Driver(i['full_name'], i['driver_number'], i['team_name'], i['team_colour'])
             self.drivers.append(driver)
 
     def get_laps(self, driver, session):

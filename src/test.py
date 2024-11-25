@@ -1,31 +1,36 @@
 from data_get import Instance
 import flet as ft
 
+# Shared state
+current_instance = Instance()
+current_meeting = None
+current_session = None
+
 def main(page: ft.Page):
     page.title = "Formula Data"
-    start = Instance()
 
     def show_latest():
-        page.views.clear()
         items = []
         stuff = []
-        latest = start.get_latest()
-        start.get_res(latest)
+        latest = current_instance.get_latest()
+        current_instance.get_res(latest)
 
         txt = ft.Text("Latest Session: " + str(latest))
+        stuff.append(txt)
 
-        for i in range(0, 3):
+        for i in range(3):
             cont = ft.Container(
-                content=ft.Text(f"P{i+1}: {start.drivers[i]}"),
+                content=ft.Text(f"P{i+1}: {current_instance.drivers[i]}", color=ft.colors.BLACK),
                 margin=10,
                 padding=10,
                 alignment=ft.alignment.center,
-                bgcolor=ft.colors.BLACK,
+                bgcolor=current_instance.drivers[i].color,
                 width=300,
                 height=150,
                 border_radius=50,
             )
             items.append(cont)
+        
         btn = ft.TextButton(text="View More...", on_click=lambda e: page.go("/latest_session"))
         items.append(btn)
 
@@ -33,25 +38,20 @@ def main(page: ft.Page):
             spacing=15,
             controls=items
         )
-        stuff.append(txt)
         stuff.append(row)
-        col = ft.Column(
-            controls=stuff,
-        )
+
+        col = ft.Column(controls=stuff)
         return col
 
-    def select_session():
+    def select_meeting():
         season = Instance()
         season.get_meetings()
         season23 = []
         season24 = []
         for meeting in season.meetings:
             btn = ft.TextButton(
-                content=ft.Text(
-                    meeting,
-                    color=ft.colors.WHITE,
-                ),
-                on_click=lambda e, m=meeting: print(f"Selected meeting: {m.id}"),
+                content=ft.Text(meeting, color=ft.colors.WHITE),
+                on_click=lambda e, m=meeting: navigate_to_meeting(m, season),
             )
             if meeting.year == 2023:
                 season23.append(btn)
@@ -74,50 +74,59 @@ def main(page: ft.Page):
             expand=1,
         )
         return tabs
+    
+    def select_session(meeting, season):
+        season.get_sessions(meeting.id)
+        btns = []
+        for session in season.sessions:
+            btn = ft.TextButton(
+                content=ft.Text(session, color=ft.colors.WHITE),
+                on_click=lambda e, s=session: navigate_to_session(s, season),
+            )
+            btns.append(btn)
+        col = ft.Column(controls=btns)
+        return col
 
-    def latest_data():
+    def show_data(instance):
         items = []
+        rows = []
+        for driver in instance.drivers:
+            rows.append(
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text(driver.pos)),
+                        ft.DataCell(ft.Text(driver.name)),
+                        ft.DataCell(ft.Text(driver.team)),
+                        ft.DataCell(ft.Text("-:--.---")),
+                    ],
+                ),
+            )
         tbl = ft.DataTable(
             columns=[
-                ft.DataColumn(ft.Text("Position"), numeric=True),
+                ft.DataColumn(ft.Text("Position")),
                 ft.DataColumn(ft.Text("Name")),
                 ft.DataColumn(ft.Text("Team")),
                 ft.DataColumn(ft.Text("Fastest Lap")),
             ],
-            rows=[
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(ft.Text("John")),
-                        ft.DataCell(ft.Text("Smith")),
-                        ft.DataCell(ft.Text("43")),
-                        ft.DataCell(ft.Text("goober")),
-                    ],
-                ),
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(ft.Text("John")),
-                        ft.DataCell(ft.Text("Smith")),
-                        ft.DataCell(ft.Text("43")),
-                        ft.DataCell(ft.Text("goober")),
-                    ],
-                ),
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(ft.Text("John")),
-                        ft.DataCell(ft.Text("Smith")),
-                        ft.DataCell(ft.Text("43")),
-                        ft.DataCell(ft.Text("goober")),
-                    ],
-                ),
-            ],
+            rows=rows,
         )
         btn = ft.TextButton(text="Menu", on_click=lambda e: page.go("/"))
         items.append(tbl)
         items.append(btn)
-        col = ft.Column(
-            controls=items
-        )
-        return col
+        row = ft.Row(controls=items, scroll=True)
+        return row
+
+    def navigate_to_meeting(meeting, instance):
+        global current_instance, current_meeting
+        current_instance = instance
+        current_meeting = meeting
+        page.go("/meeting")
+
+    def navigate_to_session(session, instance):
+        global current_instance, current_session
+        current_instance = instance
+        current_session = session
+        page.go("/session")
 
     def on_route_change(e):
         page.views.clear()
@@ -125,18 +134,37 @@ def main(page: ft.Page):
             page.views.append(
                 ft.View(
                     "/",
-                    [
+                    controls=[
                         show_latest(),
-                        select_session(),
+                        select_meeting(),
                     ]
                 )
             )
-        if e.route == "/latest_session":
+        elif e.route == "/latest_session":
             page.views.append(
                 ft.View(
                     "/latest_session",
-                    [
-                        latest_data(),
+                    controls=[
+                        show_data(current_instance),
+                    ]
+                )
+            )
+        elif e.route == "/meeting":
+            page.views.append(
+                ft.View(
+                    "/meeting",
+                    controls=[
+                        select_session(current_meeting, current_instance),
+                    ]
+                )
+            )
+        elif e.route == "/session":
+            current_instance.get_res(current_session)
+            page.views.append(
+                ft.View(
+                    "/session",
+                    controls=[
+                        show_data(current_instance),
                     ]
                 )
             )
