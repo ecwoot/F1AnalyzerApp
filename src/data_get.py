@@ -11,7 +11,7 @@ class Instance:
     sessions = []
     drivers = []
     laps = []
-    selectedSession = None
+    latest = None
     selectedFastLap = None
 
     def get(self, url):
@@ -25,7 +25,7 @@ class Instance:
     def get_latest(self):
         url = "https://api.openf1.org/v1/sessions?session_key=latest"
         i = self.get(url)
-        return Session(i[0]['location'], i[0]['session_name'], i[0]['year'], i[0]['session_key'])
+        self.latest = Session(i[0]['location'], i[0]['session_name'], i[0]['year'], i[0]['session_key'])
 
     def get_meetings(self):
         url = "https://api.openf1.org/v1/meetings"
@@ -66,21 +66,17 @@ class Instance:
             driver = Driver(i['full_name'], i['driver_number'], i['team_name'], i['team_colour'])
             self.drivers.append(driver)
 
-    def get_laps(self, driver, session):
+    def get_laps(self, session):
         url = "https://api.openf1.org/v1/laps?session_key=" + str(session.id)
         data = self.get(url)
         self.laps.clear()
         for i in data:
-            if i['driver_number'] == driver.number:
-                lap = Lap(i['lap_duration'], i['lap_number'])
-                self.laps.append(lap)
-        lapCopy = []
-        for lap in self.laps:
+            lap = Lap(i['lap_duration'], i['lap_number'], i['driver_number'])
             if lap.time != None:
-                lapCopy.append(lap)
+                self.laps.append(lap)
 
-        MergeSort.sort(lapCopy, 0, len(lapCopy) - 1, key=lambda lap: lap.time)
-        self.selectedFastLap = driver.name + "'s fastest lap was lap " + str(lapCopy[0])
+        MergeSort.sort(self.laps, 0, len(self.laps) - 1, key=lambda lap: lap.time)
+        self.selectedFastLap = "Fastest lap was lap " + str(self.laps[0])
         for j in range(0, len(self.laps)):
             if self.laps[j].time == None:
                 self.laps[j] = str(j + 1) + ": -:--.---"

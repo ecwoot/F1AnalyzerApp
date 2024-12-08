@@ -12,8 +12,11 @@ def main(page: ft.Page):
     def show_latest():
         items = []
         stuff = []
-        latest = current_instance.get_latest()
+        current_instance.get_latest()
+        latest = current_instance.latest
         current_instance.get_res(latest)
+        global current_session 
+        current_session = latest
 
         txt = ft.Text("Latest Session: " + str(latest))
         stuff.append(txt)
@@ -87,9 +90,15 @@ def main(page: ft.Page):
         col = ft.Column(controls=btns)
         return col
 
+    def find_laps(instance, driver):
+        for lap in instance.laps:
+            if lap.number == driver.number:
+                return str(lap)
+
     def show_data(instance):
         items = []
         rows = []
+        instance.get_laps(current_session)
         for driver in instance.drivers:
             rows.append(
                 ft.DataRow(
@@ -97,7 +106,7 @@ def main(page: ft.Page):
                         ft.DataCell(ft.Text(driver.pos)),
                         ft.DataCell(ft.Text(driver.name)),
                         ft.DataCell(ft.Text(driver.team)),
-                        ft.DataCell(ft.Text("-:--.---")),
+                        ft.DataCell(ft.Text(find_laps(instance, driver))),
                     ],
                 ),
             )
@@ -110,11 +119,16 @@ def main(page: ft.Page):
             ],
             rows=rows,
         )
-        btn = ft.TextButton(text="Menu", on_click=lambda e: page.go("/"))
+        btn = ft.ElevatedButton(text="Menu", on_click=lambda e: page.go("/"))
         items.append(tbl)
         items.append(btn)
-        row = ft.Row(controls=items, scroll=True)
-        return row
+        list_view = ft.ListView(
+            expand=1,
+            auto_scroll=True,
+            padding=10,
+            controls=items,
+        )
+        return list_view
 
     def navigate_to_meeting(meeting, instance):
         global current_instance, current_meeting
@@ -165,7 +179,8 @@ def main(page: ft.Page):
                     "/session",
                     controls=[
                         show_data(current_instance),
-                    ]
+                    ],
+                    scroll=True
                 )
             )
         page.update()

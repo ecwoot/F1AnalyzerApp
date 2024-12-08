@@ -1,3 +1,5 @@
 build/
 src/__pycache__/
 src/.venv/
+src/dist
+src/Formula_Data.spec

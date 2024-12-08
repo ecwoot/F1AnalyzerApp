@@ -1,8 +1,8 @@
 class Lap:
-    def __init__(self, time, lap):
+    def __init__(self, time, lap, number):
         self.time = time
         self.lap = lap
-        #self.tyre = tyre
+        self.number = number
 
     def __str__(self):
         if self.time is None:
@@ -15,6 +15,6 @@ class Lap:
         else:
             time = f"{self.time:.2f}"
         
-        return f"{self.lap}: {time}"
+        return f"{time}"
 
 
